@@ -1,5 +1,5 @@
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 import express from "express";
 
 const app = express();
@@ -10,37 +10,64 @@ app.use("/public", express.static(__dirname + "/public"));
 app.get("/", (_, res) => res.render("home"));
 app.get("/*", (_, res) => res.redirect("/"));
 
-const handleListen = () => console.log(`Listening on http://localhost:3000`);
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+function getPublicRooms() {
+    const {
+        sockets: {
+            adapter: {
+                sids, rooms
+            }
+        }
+    } = wsServer;
+    const publicRooms = [];
+    rooms.forEach((_, key) => {
+        if(sids.get(key) === undefined){
+            publicRooms.push([key, countRoomMembers(key)]);
+        }
+    });
+    return publicRooms;
+}
 
-const sockets = [];
+function countRoomMembers(room) {
+    return wsServer.sockets.adapter.rooms.get(room)?.size;
+}
 
-wss.on("connection", (socket) => {
-    sockets.push(socket);
-    socket["nickname"] = "Anonymous";
-    console.log("Conncected to Browser ✔");
+wsServer.on("connection", (socket) => {
+    socket["nickname"] = "Nameless";
+    wsServer.sockets.emit("room_change", getPublicRooms());
 
-    socket.on("close", () => {
-        console.log("Discconected from Browser ❌");
+    socket.onAny((event) => {
+        console.log(`Socket Event: ${event}`);
     });
 
-    socket.on("message", (message) => {
-        const parsedMessage = JSON.parse(message);
-        switch(parsedMessage.type){
-            case "message":
-                sockets.forEach((asocket) => {
-                    if(asocket["nickname"] == "Anonymous" || asocket["nickname"] != socket["nickname"]){
-                        asocket.send(`${socket["nickname"]}: ${parsedMessage.payload.toString("utf8")}`);
-                    }
-                });    
-                break;
-            case "nickname":
-                socket["nickname"] = parsedMessage.payload.toString("utf8");
-                break;
-        }
+    socket.on("enter_room", (room, done) => {
+        socket.join(room);
+        done(countRoomMembers(room));
+        socket.to(room).emit("welcome", socket.nickname, countRoomMembers(room));
+        wsServer.sockets.emit("room_change", getPublicRooms());
+    });
+
+    socket.on("disconnecting", () => {
+        socket.rooms.forEach((room) => {
+            socket.to(room).emit("bye", socket.nickname, countRoomMembers(room) - 1);
+        });
+    });
+
+    socket.on("disconnect", () => {
+        wsServer.sockets.emit("room_change", getPublicRooms());
+    })
+
+    socket.on("new_message", (msg, room, done) => {
+        socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
+        done();
+    });
+
+    socket.on("nickname", (nick) => {
+        socket["nickname"] = nick;
     });
 });
 
-server.listen(3000, handleListen);
+const handleListen = () => console.log(`Listening on http://localhost:3000`);
+httpServer.listen(3000, handleListen);

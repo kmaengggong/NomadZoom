@@ -10,13 +10,29 @@ html(lang="en")
         header
             h1 NomadZoom
         main
-            form#nickname
-                input(type="text", placeholder="choose a nickname", required)
-                button Save
-            ul
-            h2 Your Nickname:
-            h3 Anonymous
-            form#message
-                input(type="text", placeholder="write a message", required)
-                button Send
-        script(src="/public/js/app.js") 
+            div#welcome
+                h2 Hi! This is NomadZoom🎃
+                h4 Change Your Nickname
+                form#nickname
+                    input(placeholder="nickname", required, type="text")
+                    button Save
+                h4 Create Your Room
+                form#create-room
+                    input(placeholder="room name", required, type="text")
+                    button Enter Room
+                h4 Opened Rooms
+                form#for-layout
+                    ul
+            div#room
+                h2
+                h4 Chat
+                form#for-layout1
+                    ul
+                form#message
+                    input(placeholder="message", required, type="text")
+                    button Send
+                button#back Back
+        
+        script(src="/socket.io/socket.io.js") 
+        script(src="/public/js/app.js")
+        // script(src="/public/app.js")
