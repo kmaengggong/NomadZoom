@@ -13,12 +13,16 @@ let nickname = "Nameless";
 function addMessage(msg, option) {
     const ul = room.querySelector("ul");
     const li = document.createElement("li");
-    if(option === undefined){
-        li.innerText = msg;
+    li.innerText = msg;
+    li.style.listStyle = "none";
+    if(option !== undefined){
+        li.style.color = "blue";
+        // li.innerHTML = `<p>${msg}</p>`;
     }
-    else{
-        li.innerHTML = `<p style="color: blue;">${msg}</p>`
-    }
+    // else{
+        // li.innerText = 
+        // li.innerHTML = `<p style="color: blue;">${msg}</p>`
+    // }
     // 
     ul.appendChild(li);
 }
@@ -67,14 +71,14 @@ nickForm.addEventListener("submit", handleNicknameSubmit);
 
 
 socket.on("welcome", (nick, memberCount) => {
-    const h3 = room.querySelector("h3");
-    h3.innerText = `Room: ${roomName} (🤸‍♂️${memberCount})`;
+    const h2 = room.querySelector("h2");
+    h2.innerText = `Room: ${roomName} (🤸‍♂️${memberCount})`;
     addMessage(`${nick} joined the room!!!`);
 });
 
 socket.on("bye", (nick, memberCount) => {
-    const h3 = room.querySelector("h3");
-    h3.innerText = `Room: ${roomName} (🤸‍♂️${memberCount})`;
+    const h2 = room.querySelector("h2");
+    h2.innerText = `Room: ${roomName} (🤸‍♂️${memberCount})`;
     addMessage(`${nick} left the room...`);
 });
 
@@ -88,12 +92,16 @@ socket.on("room_change", (rooms) => {
     if(rooms.length === 0){
         const li = document.createElement("li");
         li.innerHTML = "No Rooms yet 😅";
+        li.style.listStyle = "none";
         roomList.append(li);
         return;
     }
     rooms.forEach((room) => {
         const li = document.createElement("li");
-        li.innerHTML = `<a id=${room}>${room[0]} (${room[1]})</a>`;
+        li.style.listStyle = "none";
+        li.innerHTML = `
+            <a id=${room} style="text-decoration: none;">${room[0]} (${room[1]})</a>
+        `;
         roomList.append(li);
         li.addEventListener("click", (event) => {
             socket.emit("enter_room", room[0], showRoom);
