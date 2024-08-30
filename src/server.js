@@ -1,3 +1,13 @@
+// Code Challenge
+// Implement a P2P Videocall with WebRTC.
+// Put the backend code on src/server.js and the frontend code on src/public/app.js.
+// Videocall Flow:
+// User A should create a room.
+// User B should join the room.
+// Video call should start.
+// 2 people max. allowed per room.
+// Extra points: Implement a realtime chat using Data Channels*.
+
 import http from "http";
 import SocketIO from "socket.io";
 import express from "express";
@@ -13,59 +23,22 @@ app.get("/*", (_, res) => res.redirect("/"));
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
-function getPublicRooms() {
-    const {
-        sockets: {
-            adapter: {
-                sids, rooms
-            }
-        }
-    } = wsServer;
-    const publicRooms = [];
-    rooms.forEach((_, key) => {
-        if(sids.get(key) === undefined){
-            publicRooms.push([key, countRoomMembers(key)]);
-        }
-    });
-    return publicRooms;
-}
-
-function countRoomMembers(room) {
-    return wsServer.sockets.adapter.rooms.get(room)?.size;
-}
-
 wsServer.on("connection", (socket) => {
-    socket["nickname"] = "Nameless";
-    wsServer.sockets.emit("room_change", getPublicRooms());
-
-    socket.onAny((event) => {
-        console.log(`Socket Event: ${event}`);
+    socket.on("enter_room", (roomName) => {
+        socket.join(roomName);
+        socket.to(roomName).emit("welcome");
     });
 
-    socket.on("enter_room", (room, done) => {
-        socket.join(room);
-        done(countRoomMembers(room));
-        socket.to(room).emit("welcome", socket.nickname, countRoomMembers(room));
-        wsServer.sockets.emit("room_change", getPublicRooms());
+    socket.on("offer", (offer, roomName) => {
+        socket.to(roomName).emit("offer", offer);
     });
 
-    socket.on("disconnecting", () => {
-        socket.rooms.forEach((room) => {
-            socket.to(room).emit("bye", socket.nickname, countRoomMembers(room) - 1);
-        });
+    socket.on("answer", (answer, roomName) => {
+        socket.to(roomName).emit("answer", answer);
     });
 
-    socket.on("disconnect", () => {
-        wsServer.sockets.emit("room_change", getPublicRooms());
-    })
-
-    socket.on("new_message", (msg, room, done) => {
-        socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
-        done();
-    });
-
-    socket.on("nickname", (nick) => {
-        socket["nickname"] = nick;
+    socket.on("ice", (ice, roomName) => {
+        socket.to(roomName).emit("ice", ice);
     });
 });
 
