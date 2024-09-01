@@ -1,3 +1,13 @@
+// Code Challenge
+// Implement a P2P Videocall with WebRTC.
+// Put the backend code on src/server.js and the frontend code on src/public/app.js.
+// Videocall Flow:
+// User A should create a room.
+// User B should join the room.
+// Video call should start.
+// 2 people max. allowed per room.
+// Extra points: Implement a realtime chat using Data Channels*.
+
 import http from "http";
 import SocketIO from "socket.io";
 import express from "express";
@@ -13,24 +23,8 @@ app.get("/*", (_, res) => res.redirect("/"));
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
-let rooms = {};
-
 wsServer.on("connection", (socket) => {
-    socket.on("join_room", (roomName) => {
-        console.log(rooms);
-        // 2명 입장 제한
-        if(rooms[roomName] !== undefined){
-            // 2명 이상 일때
-            if(rooms[roomName] > 0){
-                socket.emit("full_room");
-                return;
-            }
-            rooms[roomName] += 1;
-        }
-        else{
-            rooms[roomName] = 0;
-        }
-
+    socket.on("enter_room", (roomName) => {
         socket.join(roomName);
         socket.to(roomName).emit("welcome");
     });

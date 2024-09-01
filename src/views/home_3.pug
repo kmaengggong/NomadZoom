@@ -4,23 +4,23 @@ html(lang="en")
         meta(charset="UTF-8")
         meta(http-equiv="X-UA-Compatible", content="IE=edge")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
-        title Noom
+        title NomadZoom
         link(rel="stylesheet", href="https://unpkg.com/mvp.css")
     body
         header
-            h1 Noom
+            h1 NomadZoom
         main
             div#welcome
-                form    
+                form
                     input(placeholder="room name", required, type="text")
-                    button Enter room
+                    button Enter
             div#call
                 div#myStream
-                    video#myFace(autoplay,playsinline, width="400", height="400")
+                    video#myFace(autoplay, playsinline, width="400", height="400")
                     button#mute Mute
                     button#camera Turn Camera Off
                     select#cameras
-                    video#peerFace(autoplay,playsinline, width="400", height="400")
+                    video#peerFace(autoplay, playsinline, width="400", height="400")
                 h2
                 h4 Chat
                 form#for-layout
@@ -29,6 +29,5 @@ html(lang="en")
                     input(placeholder="message", required, type="text")
                     button Send
                 button#back Back
-
-        script(src="/socket.io/socket.io.js") 
+        script(src="/socket.io/socket.io.js")
         script(src="/public/js/app.js") 
